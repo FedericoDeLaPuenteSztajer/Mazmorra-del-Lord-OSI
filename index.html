@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mazmorra del Lord OSI — Escape Room Modelo OSI</title>
+    <meta name="description" content="Escape room educativo sobre el modelo OSI. Derrotá 7 jefes — uno por cada capa.">
+    
+    <!-- Fuentes: Cinzel (gótica/grimorio) + VT323 (CRT) + JetBrains Mono (terminal) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=VT323&family=JetBrains+Mono:wght@400;700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Efectos visuales ambientales -->
+    <div class="vignette"></div>
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+
+    <!-- ============================ PANTALLA DE INICIO ============================ -->
+    <section id="intro-screen" class="screen">
+        <div class="intro-content">
+            <img src="images/logo.svg" alt="Mazmorra del Lord OSI" class="intro-logo" onerror="this.style.display='none'">
+            
+            <p class="intro-tagline">Un escape room a través de las 7 capas del modelo OSI</p>
+            
+            <div class="intro-grimoire">
+                <p class="grimoire-flavor">
+                    «Siete capas. Siete jefes. Siete fragmentos. Descende por los terrenos del Lord OSI 
+                    recolectando las claves para lograr derrotarlo con el código maestro. Cada error 
+                    te cuesta puntos de red y al llegar a cero la conexión se cierra y eres expulsado de 
+                    sus tierras.»
+                </p>
+                
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <span class="rule-icon">⚔️</span>
+                        <h3>Respuestas</h3>
+                        <p>Cada respuesta correcta derrota al jefe y te da un fragmento.</p>
+                    </div>
+                    <div class="rule-card">
+                        <span class="rule-icon">💀</span>
+                        <h3>Errores</h3>
+                        <p>Respuesta: <strong>−50</strong>. Pista: <strong>−100</strong>. Código maestro: <strong>−300</strong>.</p>
+                    </div>
+                    <div class="rule-card">
+                        <span class="rule-icon">🔓</span>
+                        <h3>Final</h3>
+                        <p>Al terminar, el inventario se purga. <strong>Anotá los fragmentos para ganar.</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btn-start" class="btn-primary btn-large">
+                <span class="btn-icon">►</span> INICIAR DESCENSO
+            </button>
+            
+            <p class="intro-credit">v2.0 — Modelo OSI</p>
+        </div>
+    </section>
+
+    <!-- ============================ JUEGO PRINCIPAL ============================ -->
+    <section id="game-screen" class="screen hidden">
+        <div class="arena" id="game-arena">
+            
+            <!-- HUD superior: capa actual + progreso + puntaje -->
+            <header class="hud">
+                <div class="hud-layer">
+                    <span class="hud-label">CAPA</span>
+                    <span class="hud-value" id="ui-layer">7</span>
+                </div>
+                
+                <div class="hud-progress">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="ui-progress-bar"></div>
+                        <div class="progress-markers">
+                            <span></span><span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    <div class="progress-label" id="ui-layer-name">Aplicación</div>
+                </div>
+                
+                <div class="hud-score">
+                    <span class="hud-label">PUNTOS DE RED</span>
+                    <span class="hud-value" id="ui-score">1000</span>
+                </div>
+            </header>
+
+            <!-- Inventario de fragmentos -->
+            <div class="inventory" id="inventory-ui">
+                <div class="inventory-header">
+                    <span class="inv-dot"></span>
+                    <span>FRAGMENTOS MAESTROS RECOLECTADOS</span>
+                    <span class="inv-dot"></span>
+                </div>
+                <div class="inventory-slots" id="ui-slots"></div>
+                <div class="inventory-hint">⚠ Anotalos. Los vas a necesitar en el hackeo final.</div>
+            </div>
+            
+            <!-- ZONA DE COMBATE -->
+            <div id="combat-phase" class="combat-zone">
+                
+                <div class="boss-stage">
+                    <div class="boss-portrait-wrap">
+                        <img id="ui-boss-img" src="" alt="Boss" class="boss-portrait">
+                        <div class="boss-portrait-fallback" id="ui-boss-fallback">👹</div>
+                    </div>
+                    
+                    <div class="boss-info">
+                        <h2 class="boss-title" id="ui-boss">Boss Name</h2>
+                        <div class="health-bar-wrap">
+                            <div class="health-bar" id="ui-health"></div>
+                            <span class="health-label">HP</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lore-box">
+                    <div class="lore-header">
+                        <span class="lore-tag">[ DOSSIER ]</span>
+                    </div>
+                    <p id="ui-lore" class="lore-text">...</p>
+                </div>
+                
+                <div class="question-block">
+                    <div class="question-prompt">►&nbsp; PREGUNTA</div>
+                    <p id="ui-question" class="question-text">...</p>
+                </div>
+
+                <div id="combat-zone" class="options-grid"></div>
+
+                <div class="hint-section">
+                    <button id="btn-hint" class="btn-secondary hint-btn">
+                        <span>💡</span> Extraer pista del log (−100 pts)
+                    </button>
+                    <div id="ui-hint-box" class="hint-box hidden"></div>
+                </div>
+
+                <div id="system-feedback" class="system-feedback"></div>
+            </div>
+
+            <!-- VICTORIA DE NIVEL -->
+            <div id="victory-zone" class="hidden">
+                <div class="victory-card">
+                    <div class="victory-header">
+                        <span class="vc-badge">★</span>
+                        <h2 class="victory-title">JEFE ELIMINADO</h2>
+                        <span class="vc-badge">★</span>
+                    </div>
+                    
+                    <div class="victory-body">
+                        <div class="vc-row">
+                            <span class="vc-label">Respuesta correcta:</span>
+                            <span id="ui-correct-answer" class="vc-value vc-success"></span>
+                        </div>
+                        <div class="vc-row vc-block">
+                            <span class="vc-label">Explicación:</span>
+                            <span id="ui-explanation" class="vc-value"></span>
+                        </div>
+                        <div class="vc-row vc-block">
+                            <span id="ui-game-relation" class="vc-value vc-accent"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="fragment-reveal">
+                        <div class="frag-label">FRAGMENTO EXTRAÍDO — <span id="ui-fragment-theme"></span></div>
+                        <div class="frag-code" id="ui-code"></div>
+                        <div class="frag-warning">★ Anotalo ★</div>
+                    </div>
+                </div>
+                
+                <button id="btn-next" class="btn-primary btn-advance">
+                    Descender al siguiente nivel <span>▼</span>
+                </button>
+            </div>
+
+            <!-- HACKEO FINAL OBLIGATORIO -->
+            <div id="final-hack-phase" class="hidden final-hack">
+                <div class="alert-banner">
+                    <span class="alert-icon">⚠</span>
+                    <span>SISTEMA COMPROMETIDO</span>
+                    <span class="alert-icon">⚠</span>
+                </div>
+                
+                <h2 class="final-title">CONTRASEÑA REQUERIDA</h2>
+                
+                <p class="final-warning">
+                    <strong>[ ALERTA ]</strong> El sistema de defensa purgó tu memoria cache.
+                    El inventario fue borrado.
+                </p>
+                <p class="final-desc">
+                    Ingresá los <strong>7 fragmentos juntos</strong> de memoria para vencer al Lord OSI.
+                    Si no los anotaste... buena suerte.
+                </p>
+                
+                <div class="terminal-input-group big-input">
+                    <input type="text" id="mandatory-master-input" placeholder="EJ: ABCDEFG..." autocomplete="off" spellcheck="false">
+                    <button id="btn-mandatory-master" class="btn-primary btn-exec">EJECUTAR</button>
+                </div>
+                <div id="mandatory-feedback" class="terminal-feedback"></div>
+            </div>
+
+            <!-- TERMINAL DE BYPASS TEMPRANO -->
+            <div class="early-terminal" id="early-override-terminal">
+                <div class="terminal-header">
+                    <span class="term-dot red"></span>
+                    <span class="term-dot yellow"></span>
+                    <span class="term-dot green"></span>
+                    <span class="terminal-title">~/root/override.sh</span>
+                </div>
+                <div class="terminal-body">
+                    <p class="terminal-desc">
+                        <span class="prompt">$</span> 
+                        ¿Ya dedujiste el código maestro? Introducilo y gana directo (<strong>+500 pts</strong>).
+                    </p>
+                    <div class="terminal-input-group">
+                        <input type="text" id="early-master-input" placeholder="ingresar_override..." autocomplete="off" spellcheck="false">
+                        <button id="btn-early-master" class="btn-terminal">SEND</button>
+                    </div>
+                    <div id="early-master-feedback" class="terminal-feedback"></div>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
+    <!-- ============================ GAME OVER ============================ -->
+    <div id="game-over-screen" class="hidden fullscreen-overlay">
+        <div class="gameover-content">
+            <img src="images/gameover.svg" alt="Game Over" class="gameover-img" onerror="this.style.display='none'">
+            <h1 class="fatal-error">FATAL ERROR</h1>
+            <p class="gameover-text">Tus puntos de red llegaron a 0.</p>
+            <p class="gameover-text">La conexión se cerró y el Lord OSI te desterró.</p>
+            <button onclick="location.reload()" class="btn-primary btn-reset">↻ REINICIAR SISTEMA</button>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
